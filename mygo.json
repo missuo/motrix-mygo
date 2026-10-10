@@ -1,0 +1,6 @@
+{
+  "name": "Motrix",
+  "identifier": "app.motrix.mygo",
+  "version": "0.2.0",
+  "out": "build"
+}

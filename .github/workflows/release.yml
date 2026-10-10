@@ -1,0 +1,131 @@
+name: Release
+
+# Pushing a tag such as v0.2.0 builds the macOS disk images, signed and
+# notarized, and the Windows installer, and publishes them as a release.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # the release, and the uploads to it
+
+jobs:
+  draft-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the tag against the version
+        run: test "$GITHUB_REF_NAME" = "v$(jq -r .version mygo.json)"
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+              --draft --verify-tag --title "$GITHUB_REF_NAME" --generate-notes
+          fi
+
+  build:
+    needs: draft-release
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: macOS, os: macos-latest, platform: "darwin/arm64,darwin/amd64" }
+          # MyGo needs no cgo: Linux builds the Windows app and its installer.
+          - { name: Windows, os: ubuntu-latest, platform: "windows/amd64" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Fetch aria2c
+        run: go run ./scripts/fetch-engine -all
+
+      - name: Install NSIS, for the Windows installer
+        if: matrix.name == 'Windows'
+        run: sudo apt-get update && sudo apt-get install -y nsis
+
+      - name: Import the certificate and the notary credentials
+        if: matrix.name == 'macOS'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          password="$(openssl rand -base64 24)"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          echo "$MACOS_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" \
+            -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          rm "$RUNNER_TEMP/certificate.p12"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$password" "$keychain"
+          security list-keychains -d user -s "$keychain" login.keychain
+          xcrun notarytool store-credentials notary --keychain "$keychain" \
+            --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD"
+
+          # Sign with the Developer ID of the certificate, and notarize with
+          # the profile just stored. Builds elsewhere stay signed ad hoc.
+          identity="$(security find-identity -v -p codesigning "$keychain" \
+            | sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p' | head -n 1)"
+          test -n "$identity"
+          jq --arg identity "$identity" --arg keychain "$keychain" \
+            '.macos = {signingIdentity: $identity, notarize: {keychainProfile: "notary", keychain: $keychain}}' \
+            mygo.json > mygo.json.tmp
+          mv mygo.json.tmp mygo.json
+
+      - name: Build
+        run: go tool mygo build -platform "${{ matrix.platform }}"
+
+      - name: Check the signature and the notarization
+        if: matrix.name == 'macOS'
+        run: |
+          for app in build/darwin-*/Motrix.app; do
+            codesign --verify --deep --strict --verbose=2 "$app"
+            codesign --verify --strict --verbose=2 "$app/Contents/Resources/engine/aria2c"
+            spctl --assess --type execute --verbose=2 "$app"
+            xcrun stapler validate "$app"
+          done
+
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The disk images of both Macs have one name: name every file for
+          # its platform.
+          version="${GITHUB_REF_NAME#v}"
+          mkdir upload
+          for dir in build/*/; do
+            target="$(basename "$dir")"
+            case "$target" in
+              darwin-arm64) name="macos-arm64" ;;
+              darwin-amd64) name="macos-x64" ;;
+              windows-amd64) name="windows-x64" ;;
+              *) continue ;;
+            esac
+            for file in "$dir"*.dmg; do
+              [ -e "$file" ] && cp "$file" "upload/Motrix-$version-$name.dmg"
+            done
+            for file in "$dir"*Setup*.exe; do
+              [ -e "$file" ] && cp "$file" "upload/Motrix-$version-$name-setup.exe"
+            done
+          done
+          ls -l upload
+          test -n "$(ls upload)"
+          gh release upload "$GITHUB_REF_NAME" upload/* --repo "$GITHUB_REPOSITORY" --clobber
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false
