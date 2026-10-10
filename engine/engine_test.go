@@ -274,7 +274,14 @@ func TestPauseResumeAcrossRestart(t *testing.T) {
 	if paused.Done == 0 || paused.Done >= int64(len(data)) {
 		t.Fatalf("paused at %d of %d", paused.Done, len(data))
 	}
+	// Quitting does not keep the app waiting.
+	closing := time.Now()
 	m.Close()
+	if took := time.Since(closing); took > 1500*time.Millisecond {
+		t.Errorf("closing the engine took %v", took)
+	} else {
+		t.Logf("closing the engine took %v", took)
+	}
 
 	// The database brings the task back, where it was.
 	m = startManager(t, cfg)

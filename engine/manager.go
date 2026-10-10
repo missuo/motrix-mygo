@@ -521,12 +521,17 @@ func (m *Manager) shutdown(proc *process) {
 	select {
 	case <-proc.exited:
 	default:
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		proc.rpc.call(ctx, nil, "aria2.shutdown")
-		cancel()
+		// A signal stops aria2 at once, saving its session as it goes;
+		// aria2.shutdown answers first and quits three seconds later, which
+		// is where a signal cannot be sent, as on Windows.
+		if !terminate(proc.cmd) {
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			proc.rpc.call(ctx, nil, "aria2.forceShutdown")
+			cancel()
+		}
 		select {
 		case <-proc.exited:
-		case <-time.After(6 * time.Second):
+		case <-time.After(5 * time.Second):
 			proc.cmd.Process.Kill()
 			<-proc.exited
 		}
