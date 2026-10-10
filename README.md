@@ -151,8 +151,8 @@ other machines stay signed ad hoc. Then release a version:
 
 ```sh
 # set "version" in mygo.json, commit, then
-git tag v0.2.0
-git push origin v0.2.0
+git tag v0.0.1
+git push origin v0.0.1
 ```
 
 ## Platforms
