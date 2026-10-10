@@ -150,10 +150,13 @@ writes the signing identity it finds there into `mygo.json`, so builds on
 other machines stay signed ad hoc. Then release a version:
 
 ```sh
-# set "version" in mygo.json, commit, then
-git tag v0.0.2
-git push origin v0.0.2
+# set "version" in mygo.json, add its section to CHANGELOG.md, commit, then
+git tag v0.0.3
+git push origin v0.0.3
 ```
+
+The release notes are the version's section of `CHANGELOG.md`; a tag whose
+version has none fails before anything is built.
 
 ## Platforms
 
@@ -177,6 +180,8 @@ git push origin v0.0.2
 | `theme.go`, `widgets.go`, `i18n.go` | colors, shared widgets and texts |
 | `engine/` | the aria2 process, its arguments and its RPC |
 | `scripts/fetch-engine/` | downloads and verifies `aria2c` |
+| `scripts/make-icon/` | draws the app icon |
+| `scripts/release-notes.sh`, `CHANGELOG.md` | the notes of each release |
 | `scripts/set-release-secrets.sh`, `.github/workflows/` | the release workflow and its secrets |
 | `resources/` | the app icon, `aria2.conf`, and `aria2c` per platform |
 | `icons/`, `art/` | [Lucide](https://lucide.dev) icons (ISC) and Motrix's settings artwork (MIT) |
