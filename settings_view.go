@@ -487,7 +487,7 @@ func (a *app) aboutSettings(c *ui.Context, p palette) {
 	value := func(s string) { ui.Text(c, s).FontSize(13).TextColor(p.muted).Selectable() }
 	ui.Column(c).Padding(20, 0).Gap(4).BorderWidth(0, 0, 1, 0).BorderColor(p.border).Children(func() {
 		ui.Text(c, "Motrix").FontSize(20).Bold()
-		ui.Text(c, T("A download manager, drawn natively.")).FontSize(13.5).TextColor(p.muted)
+		ui.Text(c, T("Motrix with a native interface in Go: no Electron, no webview.")).FontSize(13.5).TextColor(p.muted)
 	})
 	settingRow(c, p, T("Version"), "", func() {
 		// The version of mygo.json, which the build stamps into the app.
@@ -509,6 +509,10 @@ func (a *app) aboutSettings(c *ui.Context, p palette) {
 		ui.Link(c, "MyGo", "https://github.com/egoist/mygo").FontSize(13)
 	})
 	settingRow(c, p, T("Source code"), "", func() {
-		ui.Link(c, "github.com/agalwood/Motrix", "https://github.com/agalwood/Motrix").FontSize(13)
+		ui.Link(c, "github.com/missuo/motrix-mygo", "https://github.com/missuo/motrix-mygo").FontSize(13)
+	})
+	settingRow(c, p, T("Acknowledgements"), T("The design, the settings and the aria2 build are Motrix's."), func() {
+		ui.Link(c, "Motrix", "https://github.com/agalwood/Motrix").FontSize(13)
+		ui.Link(c, "aria2", "https://github.com/motrixapp/aria2").FontSize(13)
 	})
 }

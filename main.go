@@ -73,13 +73,13 @@ func main() {
 		mygo.App.OnQuit(a.eng.Close)
 		a.win = mygo.NewWindow(mygo.WindowOptions{
 			Title: "Motrix",
-			// Wide enough for every column of the downloads and the four
-			// tiles of the dashboard, whole.
-			Width:     1200,
-			Height:    780,
+			// Just wide enough for every column of the downloads and the
+			// four tiles of the dashboard, whole.
+			Width:     1024,
+			Height:    660,
 			MinWidth:  960,
 			MinHeight: 620,
-			StateKey:  "main-2",
+			StateKey:  "main-3",
 			// The view draws the title bar, under the window controls.
 			// macOS keeps its traffic lights at the left; Windows and
 			// Linux draw their controls at the right, as high as the band.

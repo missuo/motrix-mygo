@@ -4,6 +4,13 @@ Each release has a section here, headed by its version. The release
 workflow publishes that section as the release notes, and refuses a tag
 whose version has none.
 
+## 0.0.4
+
+- The window opens smaller, at 1024×660, and the downloads list fits all of
+  its columns at that size.
+- The About page links to this project's source, and credits Motrix and aria2.
+- Install with Homebrew: `brew install --cask owo-network/brew/motrix`.
+
 ## 0.0.3
 
 - New app icon, drawn by `scripts/make-icon`.

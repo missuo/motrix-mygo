@@ -44,11 +44,11 @@ type column struct {
 
 var taskColumns = []column{
 	{"name", "Name", 0, ui.Start},
-	{"size", "Size", 80, ui.End},
-	{"progress", "Progress", 140, ui.Start},
-	{"status", "Status", 128, ui.Start},
-	{"down", "Down", 88, ui.End},
-	{"up", "Up", 88, ui.End},
+	{"size", "Size", 72, ui.End},
+	{"progress", "Progress", 124, ui.Start},
+	{"status", "Status", 120, ui.Start},
+	{"down", "Down", 80, ui.End},
+	{"up", "Up", 80, ui.End},
 	{"eta", "ETA", 64, ui.End},
 	{"added", "Added", 64, ui.End},
 }
@@ -56,7 +56,7 @@ var taskColumns = []column{
 const (
 	// nameMinWidth is the least the column of names takes: a list narrower
 	// than its columns scrolls sideways.
-	nameMinWidth = 220
+	nameMinWidth = 180
 	rowPadding   = 12
 )
 

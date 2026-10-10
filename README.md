@@ -168,8 +168,8 @@ other machines stay signed ad hoc. Then release a version:
 
 ```sh
 # set "version" in mygo.json, add its section to CHANGELOG.md, commit, then
-git tag v0.0.3
-git push origin v0.0.3
+git tag v0.0.4
+git push origin v0.0.4
 ```
 
 The release notes are the version's section of `CHANGELOG.md`; a tag whose

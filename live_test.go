@@ -55,7 +55,7 @@ func TestLive(t *testing.T) {
 	waitEngine(t, a)
 	t.Logf("engine: aria2 %s", a.stats.Version)
 
-	tt := ui.NewTester(a.view, 1200, 780)
+	tt := ui.NewTester(a.view, 1024, 660)
 	tt.SetScale(2)
 	tt.SetTitleBar(ui.TitleBar{Height: 52, Left: 78})
 	shot := func(name string) {

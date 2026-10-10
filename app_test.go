@@ -211,7 +211,7 @@ func TestPauseResumeRemoveFromMenu(t *testing.T) {
 func TestSettings(t *testing.T) {
 	a := newTestApp(t)
 	a.paths.settings = filepath.Join(t.TempDir(), "settings.json")
-	tt := ui.NewTester(a.view, 1200, 780)
+	tt := ui.NewTester(a.view, 1024, 660)
 	click(t, tt, "Settings")
 	for _, section := range settingsSections {
 		if !tt.HasText(section.title) {
@@ -257,7 +257,7 @@ func TestSettings(t *testing.T) {
 	}
 
 	for section, text := range map[string]string{
-		"bittorrent": "BT listen port", "network": "DNS lookup", "advanced": "RPC port", "about": "aria2 1.37.0",
+		"bittorrent": "BT listen port", "network": "DNS lookup", "advanced": "RPC port", "about": "github.com/missuo/motrix-mygo",
 	} {
 		a.router.Push("/settings/" + section)
 		tt.Frame()

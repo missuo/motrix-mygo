@@ -59,7 +59,7 @@ GOOS=windows go vet ./... && GOOS=linux go vet ./...
   `i18n.go`, taking Motrix's own wording from its `zh-CN.json` where it has
   the text.
 - **The default window shows everything whole.** After changing a page, look
-  at it at 1200×780 and at the minimum 960×620: no clipped or ellipsized
+  at it at 1024×660 and at the minimum 960×620: no clipped or ellipsized
   labels, numbers or columns.
 - **Windows and Linux put the window controls at the top right.** A page
   header pads its right with `trailingInset`, and its left with `chromeWidth`
