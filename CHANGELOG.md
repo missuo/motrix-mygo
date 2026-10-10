@@ -4,6 +4,14 @@ Each release has a section here, headed by its version. The release
 workflow publishes that section as the release notes, and refuses a tag
 whose version has none.
 
+## 0.0.5
+
+- Escape closes the "Delete files?" question in Chinese as well; it used to
+  work in English only.
+- A list of choices in the settings no longer jumps back to the chosen one
+  while you scroll it with the wheel.
+- Built on MyGo 0.4.0.
+
 ## 0.0.4
 
 - The window opens smaller, at 1024×660, and the downloads list fits all of
