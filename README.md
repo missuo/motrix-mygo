@@ -17,7 +17,24 @@ no webview: one Go binary draws the window on the GPU and drives the same
 The screenshots are written by `TestLive` while it downloads real files, so
 they show the app as it runs.
 
-## Getting started
+## Install
+
+On macOS, with [Homebrew](https://brew.sh):
+
+```sh
+brew install --cask owo-network/brew/motrix
+```
+
+Homebrew's own `motrix` cask is the original Motrix, and both install a
+`Motrix.app`: write the name with its tap, as above, and uninstall the other
+first (`brew uninstall --cask motrix`) if you have it.
+
+Or download the disk image for your Mac, or the Windows installer, from the
+[latest release](https://github.com/missuo/motrix-mygo/releases/latest). The
+macOS builds are signed and notarized; the Windows installer is not
+code-signed, so SmartScreen asks before running it.
+
+## Building from source
 
 Requires Go 1.27 or later.
 
