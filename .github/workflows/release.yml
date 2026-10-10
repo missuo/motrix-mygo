@@ -9,11 +9,16 @@ on:
 permissions:
   contents: write # the release, and the uploads to it
 
+# A tag pushed again waits for its first run, which holds the release.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   draft-release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check the tag against the version
         run: test "$GITHUB_REF_NAME" = "v$(jq -r .version mygo.json)"
       - name: Create the draft release
@@ -29,21 +34,22 @@ jobs:
     needs: draft-release
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45 # notarization can keep Apple waiting
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { name: macOS, os: macos-latest, platform: "darwin/arm64,darwin/amd64" }
+          - { name: macOS, os: macos-15, platform: "darwin/arm64,darwin/amd64" }
           # MyGo needs no cgo: Linux builds the Windows app and its installer.
-          - { name: Windows, os: ubuntu-latest, platform: "windows/amd64" }
+          - { name: Windows, os: ubuntu-24.04, platform: "windows/amd64" }
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
 
       - name: Fetch aria2c
-        run: go run ./scripts/fetch-engine -all
+        run: go run ./scripts/fetch-engine -platform "${{ matrix.platform }}"
 
       - name: Install NSIS, for the Windows installer
         if: matrix.name == 'Windows'
@@ -124,7 +130,7 @@ jobs:
 
   publish:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - env:
           GH_TOKEN: ${{ github.token }}

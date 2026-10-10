@@ -5,6 +5,7 @@
 //
 //	go run ./scripts/fetch-engine            # this machine's platform
 //	go run ./scripts/fetch-engine -all       # every platform mygo builds
+//	go run ./scripts/fetch-engine -platform windows/amd64,darwin/arm64
 package main
 
 import (
@@ -24,6 +25,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
+	"strings"
 )
 
 //go:embed engine.lock.json
@@ -51,14 +54,24 @@ var platforms = map[string]string{
 
 func main() {
 	all := flag.Bool("all", false, "fetch every platform")
+	only := flag.String("platform", "", "comma separated GOOS/GOARCH targets, as mygo build takes them")
 	out := flag.String("out", "resources", "the resources directory")
 	flag.Parse()
 	var l lock
 	if err := json.Unmarshal(lockJSON, &l); err != nil {
 		log.Fatal(err)
 	}
+	wanted := []string{runtime.GOOS + "-" + runtime.GOARCH}
+	if *only != "" {
+		wanted = strings.Split(strings.ReplaceAll(*only, "/", "-"), ",")
+		for _, w := range wanted {
+			if _, ok := platforms[w]; !ok {
+				log.Fatalf("no aria2c for %s", w)
+			}
+		}
+	}
 	for goPlatform, key := range platforms {
-		if !*all && goPlatform != runtime.GOOS+"-"+runtime.GOARCH {
+		if !*all && !slices.Contains(wanted, goPlatform) {
 			continue
 		}
 		asset, ok := l.Assets[key]
