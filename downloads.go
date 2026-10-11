@@ -591,12 +591,31 @@ func (a *app) primaryAction(t engine.Snapshot) {
 	}
 }
 
+// removeTasks takes tasks off the list, with their files or without. It
+// returns at once: stopping a download and moving its files to the trash
+// can take seconds, which must not hold up the window.
 func (a *app) removeTasks(ids []string, deleteFiles bool) {
 	for _, id := range ids {
-		a.try(a.eng.Remove(id, deleteFiles))
 		a.downloads.chosen.Remove(id)
 	}
 	a.downloads.selected = -1
+	remove := func() error {
+		var first error
+		for _, id := range ids {
+			if err := a.eng.Remove(id, deleteFiles); err != nil && first == nil {
+				first = err
+			}
+		}
+		return first
+	}
+	if a.win == nil {
+		a.try(remove())
+		return
+	}
+	go func() {
+		err := remove()
+		a.update(func() { a.try(err) })
+	}()
 }
 
 // deleteDialog asks before files are deleted from the disk.

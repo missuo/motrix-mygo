@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"os"
+	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 
@@ -105,19 +108,43 @@ func (a *app) engineConfig() engine.Config {
 		Binary: a.paths.binary, Template: a.paths.template, DataDir: a.paths.data,
 		SaveDir: a.set.App.DefaultSaveDir, Settings: a.set.Engine,
 		Proxy: a.set.Proxy.engineProxy(), Limits: a.limits, Trackers: trackers,
-		Delete: a.deleteFile,
+		Delete: a.deleteFile(a.set.App.FileDeletionMode == "trash"),
 	}
 }
 
-// deleteFile deletes a file of a task removed with its files: to the
-// trash, or for good, as the settings say.
-func (a *app) deleteFile(path string) error {
-	if a.set.App.FileDeletionMode == "trash" && a.win != nil {
-		if err := mygo.Shell.TrashItem(path); err == nil {
-			return nil
+// deleteFile returns what deletes a file of a removed task: into the
+// trash, or for good when the settings say so or the trash will not take
+// it. The engine calls it off the main thread.
+func (a *app) deleteFile(toTrash bool) func(path string) error {
+	return func(path string) error {
+		// Tests, which run without a window, leave the trash alone.
+		if toTrash && a.win != nil {
+			// A trash that does not answer keeps the file: only one that
+			// refuses it, as on volumes without one, has it deleted.
+			if err := trash(path); err == nil || errors.Is(err, context.DeadlineExceeded) {
+				return err
+			}
+		}
+		return os.Remove(path)
+	}
+}
+
+// trash moves a file to the trash. macOS has a command for it since 15,
+// which, unlike the call of the system, does not hold the main thread while
+// the system takes its time.
+func trash(path string) error {
+	if runtime.GOOS == "darwin" {
+		if _, err := os.Stat("/usr/bin/trash"); err == nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			err := exec.CommandContext(ctx, "/usr/bin/trash", path).Run()
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			return err
 		}
 	}
-	return os.Remove(path)
+	return mygo.Shell.TrashItem(path)
 }
 
 // refresh takes the tasks as the engine has them now.

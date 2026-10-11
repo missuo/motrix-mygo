@@ -4,6 +4,13 @@ Each release has a section here, headed by its version. The release
 workflow publishes that section as the release notes, and refuses a tag
 whose version has none.
 
+## 0.0.9
+
+- Removing a task with its files no longer freezes the window while the
+  files move to the trash.
+- "Check for Updates…" says that Motrix is up to date in an alert of the
+  system, as other Mac apps do.
+
 ## 0.0.8
 
 - Closing the window keeps Motrix running, with an icon in the menu bar (the
