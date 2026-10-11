@@ -142,7 +142,7 @@ func appMenu() *mygo.Menu {
 	return mygo.NewMenu([]*mygo.MenuItem{
 		{Label: "Motrix", Submenu: []*mygo.MenuItem{
 			{Role: mygo.RoleAbout},
-			updater.MenuItem(),
+			{Label: updater.MenuItem().Label, Click: func(*mygo.MenuItem, *mygo.Window) { checkForUpdates() }},
 			mygo.Separator(),
 			{Role: mygo.RoleServices},
 			mygo.Separator(),
@@ -205,7 +205,7 @@ func (a *app) trayMenu() *mygo.Menu {
 		{Label: T("Show Motrix"), Click: func(*mygo.MenuItem, *mygo.Window) { a.showWindow() }},
 	}
 	if updates {
-		items = append(items, &mygo.MenuItem{Label: T("Check for Updates…"), Click: func(*mygo.MenuItem, *mygo.Window) { updater.CheckForUpdates() }})
+		items = append(items, &mygo.MenuItem{Label: T("Check for Updates…"), Click: func(*mygo.MenuItem, *mygo.Window) { checkForUpdates() }})
 	}
 	items = append(items, mygo.Separator(),
 		&mygo.MenuItem{Label: T("Quit Motrix"), Click: func(*mygo.MenuItem, *mygo.Window) { mygo.App.Quit() }})

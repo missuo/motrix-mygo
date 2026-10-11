@@ -237,7 +237,7 @@ func (a *app) generalSettings(c *ui.Context, p palette) {
 	}
 	settingRow(c, p, T("Check now"), "", func() {
 		if ui.Button(c, T("Check for Updates…")).Clicked() {
-			updater.CheckForUpdates()
+			checkForUpdates()
 		}
 	})
 }
