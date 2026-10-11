@@ -4,6 +4,11 @@ Each release has a section here, headed by its version. The release
 workflow publishes that section as the release notes, and refuses a tag
 whose version has none.
 
+## 0.0.7
+
+- With the sidebar hidden, a page's title sits below the window controls, at
+  the left edge, instead of beside the toolbar buttons.
+
 ## 0.0.6
 
 - Built on MyGo 0.4.1. Nothing changes in how the app looks or works.
