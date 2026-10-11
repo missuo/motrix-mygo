@@ -62,8 +62,9 @@ GOOS=windows go vet ./... && GOOS=linux go vet ./...
   at it at 1024×660 and at the minimum 960×620: no clipped or ellipsized
   labels, numbers or columns.
 - **Windows and Linux put the window controls at the top right.** A page
-  header pads its right with `trailingInset`, and its left with `chromeWidth`
-  while the sidebar is hidden. Do not place controls in those corners.
+  header is built on `headerRow`, which pads its right with `trailingInset`
+  and moves it below the title bar while the sidebar is hidden. Do not place
+  controls in the top corners.
 - **The app's data lives in `Motrix MyGo`**, never in Motrix's own `Motrix`
   directory: the two must not share an aria2 session or database.
 - **No secrets in the repository.** The signing certificate and the notary

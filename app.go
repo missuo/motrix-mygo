@@ -266,11 +266,8 @@ func (a *app) view(c *ui.Context) {
 	}
 }
 
-// chromeLeft is where the buttons beside the window controls start, and
-// chromeWidth the room they and the controls take from the left edge.
+// chromeLeft is where the buttons beside the window controls start.
 func chromeLeft(c *ui.Context) float32 { return max(c.TitleBar().Left, 8) + 10 }
-
-func chromeWidth(c *ui.Context) float32 { return chromeLeft(c) + 2*32 + 4 + 16 }
 
 const titleBarHeight = 52
 
@@ -398,11 +395,8 @@ func (a *app) content(c *ui.Context, p palette) {
 // trailing builds. It drags the window, as a title bar, and keeps clear of
 // the window controls while the sidebar is hidden.
 func (a *app) pageHeader(c *ui.Context, title string, trailing func()) ui.Element {
-	left := float32(24)
-	if a.set.UI.SidebarHidden {
-		left = chromeWidth(c)
-	}
-	return ui.Row(c).Height(76).Padding(8, trailingInset(c), 0, left).Gap(10).AlignItems(ui.Center).DragWindow().Children(func() {
+	row := a.headerRow(c, 76, 24)
+	return row.Gap(10).AlignItems(ui.Center).DragWindow().Children(func() {
 		if title != "" {
 			ui.Text(c, title).FontSize(24).Bold().LetterSpacing(-0.4).SingleLine()
 		}
@@ -410,4 +404,19 @@ func (a *app) pageHeader(c *ui.Context, title string, trailing func()) ui.Elemen
 			trailing()
 		}
 	})
+}
+
+// headerRow is the row of a page's header, height tall and padded left
+// beside the sidebar. While the sidebar is hidden it moves below the title
+// bar, under the window controls and the buttons beside them, and starts at
+// the window's edge.
+func (a *app) headerRow(c *ui.Context, height, left float32) ui.Element {
+	row := ui.Row(c)
+	top, right := float32(8), trailingInset(c)
+	if a.set.UI.SidebarHidden {
+		top, right, left, height = titleBarHeight-8, 24, max(left, 22), height+20
+	}
+	const d = 180 * time.Millisecond
+	return row.Height(row.Animate("height", height, d)).
+		Padding(row.Animate("top", top, d), right, 0, row.Animate("left", left, d))
 }

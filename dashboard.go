@@ -27,11 +27,7 @@ func bigNumber(c *ui.Context, value, unit string) {
 }
 
 func (a *app) dashboardPage(c *ui.Context, p palette) {
-	left := float32(10)
-	if a.set.UI.SidebarHidden {
-		left = chromeWidth(c)
-	}
-	ui.Row(c).Height(84).Padding(8, trailingInset(c), 0, left).AlignItems(ui.Center).DragWindow().Children(func() {
+	a.headerRow(c, 84, 10).AlignItems(ui.Center).DragWindow().Children(func() {
 		ui.Text(c, T("Dashboard")).FontSize(24).Bold().LetterSpacing(-0.4).SingleLine()
 	})
 	// Four tiles a row, or two where the window is too narrow for them.
