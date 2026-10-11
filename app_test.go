@@ -357,3 +357,64 @@ func TestNarrowWindowAndHiddenSidebar(t *testing.T) {
 		}
 	}
 }
+
+// A download that failed is removed like any other, from its menu, with
+// its files or without, while the details show it.
+func TestRemoveFailed(t *testing.T) {
+	a := newTestApp(t)
+	for _, item := range []string{"Remove", "Remove and delete files"} {
+		if _, err := a.eng.Add("http://127.0.0.1:1/nothing.bin", "", ""); err != nil {
+			t.Fatal(err)
+		}
+		waitStatus(t, a, engine.Failed)
+		tt := ui.NewTester(a.view, 1024, 660)
+		click(t, tt, "nothing.bin")
+		click(t, tt, "Details")
+		if err := tt.RightClick("nothing.bin"); err != nil {
+			t.Fatal(err)
+		}
+		if err := tt.ChooseMenuItem(item); err != nil {
+			t.Fatalf("choose %q: %v (menu %q)", item, err, tt.Menu())
+		}
+		tt.Frame()
+		if item != "Remove" {
+			click(t, tt, "Delete")
+			tt.Frame()
+		}
+		if n := len(a.eng.Tasks()); n != 0 {
+			t.Fatalf("%d tasks after %q", n, item)
+		}
+		if !tt.HasText("No downloads yet") {
+			t.Errorf("the page is not empty after %q: %q", item, tt.Texts())
+		}
+	}
+}
+
+// The New Task dialog opens with the links on the clipboard, and without
+// what is no link.
+func TestClipboardLinks(t *testing.T) {
+	a := newTestApp(t)
+	tt := ui.NewTester(a.view, 1024, 660)
+	tt.SetClipboard("see https://example.com/page\n https://example.com/file.zip \nmagnet:?xt=urn:btih:c12fe1c06bba254a9dc9f519b335aa7c1367a88a\nnot a link")
+	click(t, tt, "New task")
+	if want := "https://example.com/file.zip\nmagnet:?xt=urn:btih:c12fe1c06bba254a9dc9f519b335aa7c1367a88a"; a.add.links != want {
+		t.Errorf("the dialog opened with %q, want %q", a.add.links, want)
+	}
+	a.add.open = false
+	tt.Frame()
+
+	tt.SetClipboard("just some text")
+	click(t, tt, "New task")
+	if a.add.links != "" {
+		t.Errorf("the dialog took %q from the clipboard", a.add.links)
+	}
+	a.add.open = false
+	tt.Frame()
+
+	a.set.App.AutofillClipboardLinks = false
+	tt.SetClipboard("https://example.com/file.zip")
+	click(t, tt, "New task")
+	if a.add.links != "" {
+		t.Errorf("the dialog took %q with the setting off", a.add.links)
+	}
+}
