@@ -6,6 +6,9 @@ whose version has none.
 
 ## 0.0.8
 
+- Closing the window keeps Motrix running, with an icon in the menu bar (the
+  notification area on Windows): downloads go on. The icon's menu shows the
+  window again or quits; Command-Q quits as before.
 - Motrix updates itself. It looks for a new version once a day, shows what
   changed, and installs it when you say so; later updates download only what
   changed.

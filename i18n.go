@@ -162,6 +162,8 @@ var zhCN = map[string]string{
 	"Look for a new version of Motrix once a day.":                                  "每天检查一次 Motrix 的新版本。",
 	"Install updates automatically":                                                 "自动安装更新",
 	"Download a new version in the background; it runs the next time Motrix opens.": "在后台下载新版本,下次打开 Motrix 时生效。",
+	"Show Motrix":        "显示 Motrix",
+	"Quit Motrix":        "退出 Motrix",
 	"Check now":          "立即检查",
 	"Check for Updates…": "检查更新…",
 	"Last updated":       "最后更新",

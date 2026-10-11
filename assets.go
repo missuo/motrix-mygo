@@ -13,6 +13,11 @@ var iconFiles embed.FS
 //go:embed art/*.webp
 var artFiles embed.FS
 
+// trayIcon is Motrix's tray glyph, black on transparent, for the menu bar.
+//
+//go:embed art/tray.png
+var trayIcon []byte
+
 var (
 	icons = map[string]*ui.SVG{}
 	arts  = map[string]*ui.Bitmap{}

@@ -65,6 +65,8 @@ fetch every platform before a cross-platform build.
   new BitTorrent tasks.
 - **Notifications**: finished and failed downloads, in the app and as system
   notifications.
+- **Menu bar**: closing the window leaves Motrix running behind an icon in
+  the menu bar, or the notification area, whose menu shows it again or quits.
 - **Settings**: the sections of Motrix, with its names, defaults and ranges.
 - **Languages**: English and Simplified Chinese, using Motrix's own
   translations where it has the text.

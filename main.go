@@ -69,8 +69,7 @@ func main() {
 	var a *app
 	mygo.App.OnSecondInstance(func([]string, string) {
 		if a != nil && a.win != nil {
-			a.win.Show()
-			a.win.Focus()
+			a.showWindow()
 		}
 	})
 	mygo.App.WhenReady(func() {
@@ -104,6 +103,7 @@ func main() {
 			AutoHideMenuBar: true,
 			Content:         ui.View(a.view),
 		})
+		a.keepInMenuBar()
 		a.applySettings()
 		go func() {
 			for range time.Tick(30 * time.Second) {
@@ -159,14 +159,71 @@ func appMenu() *mygo.Menu {
 	})
 }
 
+// keepInMenuBar keeps the app running, with an icon in the menu bar, or
+// in the notification area on Windows and Linux, when its window is closed:
+// downloads go on, and the icon's menu shows the window again or quits.
+func (a *app) keepInMenuBar() {
+	a.win.OnClose(func(e *mygo.CloseEvent) {
+		// Closed by the quit under way: let it.
+		if a.leaving {
+			return
+		}
+		e.PreventDefault()
+		a.win.Hide()
+	})
+	// A click on the Dock icon, as on the icon in the menu bar.
+	mygo.App.OnActivate(func(bool) { a.showWindow() })
+
+	png, template := trayIcon, true
+	if runtime.GOOS != "darwin" {
+		// The notification area shows icons in color.
+		if dir, err := mygo.App.Path(mygo.PathResources); err == nil {
+			if icon, err := os.ReadFile(filepath.Join(dir, "icon.png")); err == nil {
+				png, template = icon, false
+			}
+		}
+	}
+	tray, err := mygo.NewTray(mygo.TrayOptions{Icon: png, IconIsTemplate: template, ToolTip: "Motrix", Menu: a.trayMenu()})
+	if err != nil {
+		// Without the icon nothing could show the window again.
+		log.Printf("tray: %v", err)
+		a.leaving = true
+		return
+	}
+	a.tray = tray
+}
+
+// showWindow brings the window back to the front.
+func (a *app) showWindow() {
+	a.win.Show()
+	a.win.Focus()
+}
+
+// trayMenu is the menu of the icon in the menu bar, in the app's language.
+func (a *app) trayMenu() *mygo.Menu {
+	items := []*mygo.MenuItem{
+		{Label: T("Show Motrix"), Click: func(*mygo.MenuItem, *mygo.Window) { a.showWindow() }},
+	}
+	if updates {
+		items = append(items, &mygo.MenuItem{Label: T("Check for Updates…"), Click: func(*mygo.MenuItem, *mygo.Window) { updater.CheckForUpdates() }})
+	}
+	items = append(items, mygo.Separator(),
+		&mygo.MenuItem{Label: T("Quit Motrix"), Click: func(*mygo.MenuItem, *mygo.Window) { mygo.App.Quit() }})
+	return mygo.NewMenu(items)
+}
+
 // beforeQuit asks before quitting while downloads run, when the settings
 // say to.
 func (a *app) beforeQuit(e *mygo.QuitEvent) {
 	stats := a.eng.Stats()
 	if a.quitting || !a.set.App.WarnBeforeQuit || stats.Active+stats.Seeding == 0 {
+		// The quit goes on, and closes the window for good.
+		a.leaving = true
 		return
 	}
 	e.PreventDefault()
+	// The question hangs on the window, which may be hidden.
+	a.showWindow()
 	go func() {
 		res, err := mygo.Dialog.Message(mygo.MessageOptions{
 			Parent:  a.win,

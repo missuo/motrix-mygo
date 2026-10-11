@@ -65,6 +65,10 @@ type app struct {
 	// quitting is true once the user confirmed quitting with downloads
 	// running.
 	quitting bool
+	// leaving says that a quit is under way, so that closing the window
+	// closes it instead of hiding it.
+	leaving bool
+	tray    *mygo.Tray
 }
 
 // note is a notification: a download that finished or failed.
@@ -157,6 +161,9 @@ func (a *app) applySettings() {
 		return
 	}
 	setLanguage(a.set.App.Language, mygo.App.Locale())
+	if a.tray != nil {
+		a.tray.SetMenu(a.trayMenu())
+	}
 	switch a.set.App.Theme {
 	case "light":
 		mygo.Theme.SetSource(mygo.ThemeLight)
