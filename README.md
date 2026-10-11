@@ -34,6 +34,11 @@ Or download the disk image for your Mac, or the Windows installer, from the
 macOS builds are signed and notarized; the Windows installer is not
 code-signed, so SmartScreen asks before running it.
 
+Motrix updates itself from there on: it looks for a new release once a day,
+shows its notes and offers to install it. "Check for Updates…" is in the app
+menu on macOS and in Settings › General everywhere, with the switches to turn
+the checks off or to install updates without asking.
+
 ## Building from source
 
 Requires Go 1.27 or later.
@@ -148,7 +153,7 @@ the release when both have uploaded:
 | macOS | `Motrix-<version>-macos-arm64.dmg` and `-macos-x64.dmg`, signed with the Developer ID, notarized and stapled; `aria2c` inside is signed with the hardened runtime |
 | Ubuntu | `Motrix-<version>-windows-x64-setup.exe`, an NSIS installer, not code-signed |
 
-The macOS job needs five repository secrets. Set them once from the `.p12`
+The macOS job needs five repository secrets to sign and notarize. Set them once from the `.p12`
 certificate and a file of `KEY=value` lines, neither of which belongs in the
 repository:
 
@@ -162,7 +167,21 @@ scripts/set-release-secrets.sh certificate.p12 credentials.txt
 | `MACOS_CERTIFICATE_PASSWORD` | the password of the `.p12` |
 | `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD` | the notary service's credentials: the Apple ID, its team, and an app-specific password |
 
-The workflow imports them into a keychain that lives as long as the job, and
+Updates are signed with a key of their own, which `mygo keygen` creates. Its
+public half is `updates.publicKey` in `mygo.json`; the secret half is the
+`MYGO_UPDATER_PRIVATE_KEY` secret:
+
+```sh
+gh secret set MYGO_UPDATER_PRIVATE_KEY < path/to/mygo-update.key
+```
+
+Keep a copy of that key somewhere safe. Installed apps accept only updates
+signed with it: without it they can never update again, and whoever has it can
+ship code to them. With it, each runner also uploads the update of its
+platforms, which installed apps download: `motrix-<version>-<platform>.tar.gz`,
+`.delta` files from the three versions before, and `update-<platform>.json`.
+
+The workflow imports the certificate into a keychain that lives as long as the job, and
 writes the signing identity it finds there into `mygo.json`, so builds on
 other machines stay signed ad hoc. Then release a version:
 

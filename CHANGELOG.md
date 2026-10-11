@@ -4,6 +4,17 @@ Each release has a section here, headed by its version. The release
 workflow publishes that section as the release notes, and refuses a tag
 whose version has none.
 
+## 0.0.8
+
+- Motrix updates itself. It looks for a new version once a day, shows what
+  changed, and installs it when you say so; later updates download only what
+  changed.
+- "Check for Updates…" is in the Motrix menu on macOS and in Settings ›
+  General, where you can also turn the checks off or have updates installed
+  without asking.
+- This version has to be installed by hand, or with `brew upgrade`, one last
+  time: earlier versions cannot update themselves.
+
 ## 0.0.7
 
 - With the sidebar hidden, a page's title sits below the window controls, at

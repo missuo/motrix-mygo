@@ -1,7 +1,8 @@
 name: Release
 
 # Pushing a tag such as v0.2.0 builds the macOS disk images, signed and
-# notarized, and the Windows installer, and publishes them as a release.
+# notarized, and the Windows installer, with the updates installed apps
+# download, and publishes them as a release.
 on:
   push:
     tags: ["v*"]
@@ -92,8 +93,14 @@ jobs:
             mygo.json > mygo.json.tmp
           mv mygo.json.tmp mygo.json
 
+      # With the key, the build also signs the update of each platform: an
+      # archive of the app, deltas from the versions before, and a manifest.
       - name: Build
-        run: go tool mygo build -platform "${{ matrix.platform }}"
+        env:
+          MYGO_UPDATER_PRIVATE_KEY: ${{ secrets.MYGO_UPDATER_PRIVATE_KEY }}
+        run: |
+          test -n "$MYGO_UPDATER_PRIVATE_KEY"
+          go tool mygo build -platform "${{ matrix.platform }}"
 
       - name: Check the signature and the notarization
         if: matrix.name == 'macOS'
@@ -103,6 +110,14 @@ jobs:
             codesign --verify --strict --verbose=2 "$app/Contents/Resources/engine/aria2c"
             spctl --assess --type execute --verbose=2 "$app"
             xcrun stapler validate "$app"
+          done
+          # The app an update installs is the one in its archive: it must
+          # pass as well.
+          for archive in build/darwin-*/*.tar.gz; do
+            dir="$(mktemp -d)"
+            tar -xzf "$archive" -C "$dir"
+            spctl --assess --type execute --verbose=2 "$dir/Motrix.app"
+            xcrun stapler validate "$dir/Motrix.app"
           done
 
       - name: Upload to the release
@@ -127,6 +142,12 @@ jobs:
             for file in "$dir"*Setup*.exe; do
               [ -e "$file" ] && cp "$file" "upload/Motrix-$version-$name-setup.exe"
             done
+            # The update files keep their names, which the manifests and
+            # the apps know them by.
+            for file in "$dir"*.tar.gz "$dir"*.delta "$dir"update-*.json; do
+              [ -e "$file" ] && cp "$file" upload/
+            done
+            test -e "upload/update-$target.json"
           done
           ls -l upload
           test -n "$(ls upload)"

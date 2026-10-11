@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/egoist/mygo"
+	"github.com/egoist/mygo/plugins/updater"
 	"github.com/egoist/mygo/ui"
 
 	"motrix-mygo/engine"
@@ -221,6 +222,24 @@ func (a *app) generalSettings(c *ui.Context, p palette) {
 	if switchRow(c, p, T("Show failed downloads"), "", &app.NotifyInAppOnError) {
 		a.saveSettings()
 	}
+	if !updates {
+		return
+	}
+	// The updater keeps these itself, in updater.json beside the settings.
+	sectionTitle(c, p, T("Updates"))
+	checks := updater.AutomaticChecks()
+	if switchRow(c, p, T("Check for updates automatically"), T("Look for a new version of Motrix once a day."), &checks) {
+		updater.SetAutomaticChecks(checks)
+	}
+	downloads := updater.AutomaticDownloads()
+	if switchRow(c, p, T("Install updates automatically"), T("Download a new version in the background; it runs the next time Motrix opens."), &downloads) {
+		updater.SetAutomaticDownloads(downloads)
+	}
+	settingRow(c, p, T("Check now"), "", func() {
+		if ui.Button(c, T("Check for Updates…")).Clicked() {
+			updater.CheckForUpdates()
+		}
+	})
 }
 
 func (a *app) appearanceSettings(c *ui.Context, p palette) {

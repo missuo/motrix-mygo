@@ -2,5 +2,9 @@
   "name": "Motrix",
   "identifier": "app.motrix.mygo",
   "version": "0.0.7",
-  "out": "build"
+  "out": "build",
+  "updates": {
+    "publicKey": "UckQ/wmvM08J+aUMiHwm8OCkUUqCtSdW6ntMDHwoFVo=",
+    "github": "missuo/motrix-mygo"
+  }
 }

@@ -68,7 +68,13 @@ GOOS=windows go vet ./... && GOOS=linux go vet ./...
 - **The app's data lives in `Motrix MyGo`**, never in Motrix's own `Motrix`
   directory: the two must not share an aria2 session or database.
 - **No secrets in the repository.** The signing certificate and the notary
-  credentials are GitHub secrets, set by `scripts/set-release-secrets.sh`.
+  credentials are GitHub secrets, set by `scripts/set-release-secrets.sh`,
+  and so is `MYGO_UPDATER_PRIVATE_KEY`, the key that signs updates. Only its
+  public half, `updates.publicKey` in `mygo.json`, is committed: never change
+  it, or installed apps stop updating.
+- **Releases keep the names of the update files.** Installed apps fetch
+  `update-<platform>.json` from the latest release and the archive and deltas
+  it names: the workflow uploads them as `mygo build` wrote them.
 - Comments and documentation are in English. Match the comment style around
   the code: what a thing is for, in a sentence.
 

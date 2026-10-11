@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/egoist/mygo"
+	"github.com/egoist/mygo/plugins/updater"
+	"github.com/egoist/mygo/plugins/updater/native"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -41,6 +43,29 @@ func main() {
 	if !mygo.App.RequestSingleInstanceLock() {
 		return
 	}
+	path := func(name mygo.PathName) string {
+		dir, err := mygo.App.Path(name)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return dir
+	}
+	// A directory of this app's own: Motrix itself keeps its aria2
+	// session and database under "Motrix", which must stay its. Set before
+	// the updater, which keeps its preferences there, starts.
+	userData := filepath.Join(path(mygo.PathAppData), "Motrix MyGo")
+	mygo.App.SetPath(mygo.PathUserData, userData)
+	settingsPath := filepath.Join(userData, "settings.json")
+	set := loadSettings(settingsPath, path(mygo.PathDownloads))
+
+	// The update window, in native UI and in the language of the app. It
+	// checks once a day, for the releases of the repository in mygo.json.
+	mygo.Use(native.New(updater.Options{Language: updaterLanguage(set.App.Language)}))
+	updates = true
+	if menu := appMenu(); menu != nil {
+		mygo.App.SetMenu(menu)
+	}
+
 	var a *app
 	mygo.App.OnSecondInstance(func([]string, string) {
 		if a != nil && a.win != nil {
@@ -49,26 +74,15 @@ func main() {
 		}
 	})
 	mygo.App.WhenReady(func() {
-		path := func(name mygo.PathName) string {
-			dir, err := mygo.App.Path(name)
-			if err != nil {
-				log.Fatal(err)
-			}
-			return dir
-		}
-		// A directory of this app's own: Motrix itself keeps its aria2
-		// session and database under "Motrix", which must stay its.
-		userData := filepath.Join(path(mygo.PathAppData), "Motrix MyGo")
-		mygo.App.SetPath(mygo.PathUserData, userData)
 		paths := appPaths{
-			settings:  filepath.Join(userData, "settings.json"),
+			settings:  settingsPath,
 			trackers:  filepath.Join(userData, "trackers.json"),
 			data:      userData,
 			downloads: path(mygo.PathDownloads),
 		}
 		paths.binary, paths.template = findEngine(path(mygo.PathResources))
 
-		a = newApp(loadSettings(paths.settings, paths.downloads), paths)
+		a = newApp(set, paths)
 		mygo.App.OnBeforeQuit(a.beforeQuit)
 		mygo.App.OnQuit(a.eng.Close)
 		a.win = mygo.NewWindow(mygo.WindowOptions{
@@ -101,6 +115,48 @@ func main() {
 	if err := mygo.App.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// updates says that the updater plugin is in use, as it is but in tests.
+var updates bool
+
+// updaterLanguage is the language of the update window for the app's
+// setting: the system's unless the user chose one.
+func updaterLanguage(language string) string {
+	switch language {
+	case "en":
+		return "en"
+	case "zh":
+		return "zh-Hans"
+	}
+	return ""
+}
+
+// appMenu is the menu bar of macOS, which hosts the standard shortcuts,
+// with "Check for Updates…" under About. Windows and Linux show none: the
+// About page of the settings checks there.
+func appMenu() *mygo.Menu {
+	if runtime.GOOS != "darwin" {
+		return nil
+	}
+	return mygo.NewMenu([]*mygo.MenuItem{
+		{Label: "Motrix", Submenu: []*mygo.MenuItem{
+			{Role: mygo.RoleAbout},
+			updater.MenuItem(),
+			mygo.Separator(),
+			{Role: mygo.RoleServices},
+			mygo.Separator(),
+			{Role: mygo.RoleHide},
+			{Role: mygo.RoleHideOthers},
+			{Role: mygo.RoleUnhide},
+			mygo.Separator(),
+			{Role: mygo.RoleQuit},
+		}},
+		{Role: mygo.RoleFileMenu},
+		{Role: mygo.RoleEditMenu},
+		{Role: mygo.RoleViewMenu},
+		{Role: mygo.RoleWindowMenu},
+	})
 }
 
 // beforeQuit asks before quitting while downloads run, when the settings
