@@ -4,6 +4,10 @@ Each release has a section here, headed by its version. The release
 workflow publishes that section as the release notes, and refuses a tag
 whose version has none.
 
+## 0.0.10
+
+- Built on MyGo 0.5.1. Nothing changes in how the app looks or works.
+
 ## 0.0.9
 
 - Removing a task with its files no longer freezes the window while the

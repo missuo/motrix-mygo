@@ -1,7 +1,7 @@
 {
   "name": "Motrix",
   "identifier": "app.motrix.mygo",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "out": "build",
   "updates": {
     "publicKey": "UckQ/wmvM08J+aUMiHwm8OCkUUqCtSdW6ntMDHwoFVo=",
