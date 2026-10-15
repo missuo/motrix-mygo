@@ -49,9 +49,8 @@ jobs:
           - { name: Windows, os: ubuntu-24.04, platform: "windows/amd64" }
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
-        with:
-          go-version-file: go.mod
+      # The Go of the runner downloads the toolchain go.mod names: no
+      # setup-go, whose download from codeload.github.com has failed.
 
       - name: Fetch aria2c
         run: go run ./scripts/fetch-engine -platform "${{ matrix.platform }}"
