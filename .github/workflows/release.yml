@@ -49,8 +49,16 @@ jobs:
           - { name: Windows, os: ubuntu-24.04, platform: "windows/amd64" }
     steps:
       - uses: actions/checkout@v7
-      # The Go of the runner downloads the toolchain go.mod names: no
-      # setup-go, whose download from codeload.github.com has failed.
+      # From go.dev rather than with setup-go, whose download from
+      # codeload.github.com has failed, and the runner's Go is not on the
+      # PATH of macOS.
+      - name: Install the Go of go.mod
+        run: |
+          version="$(sed -n 's/^go //p' go.mod)"
+          os="$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]' | sed 's/macos/darwin/')"
+          arch="$(echo "$RUNNER_ARCH" | tr '[:upper:]' '[:lower:]' | sed 's/^x64$/amd64/')"
+          curl -fsSL "https://go.dev/dl/go$version.$os-$arch.tar.gz" | tar -xz -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/go/bin" >> "$GITHUB_PATH"
 
       - name: Fetch aria2c
         run: go run ./scripts/fetch-engine -platform "${{ matrix.platform }}"
